@@ -43,24 +43,24 @@ def comments_list(number):
     try:
         data = resp.json()
         try:
-                comments = data['payload']
-                
-                #this is a list of comment
-                comments_list = comments['page']
-                        
-                comments_text = []
-                
-                #append each comment and reply to a list
-                for i in range(len(comments_list)):
-                    if len(comments_list[i]['replies']['comments'])>0:
-                        m = comments_list[i]['message']
-                        comments_text.append(m)
-                        
-                        replies = comments_list[i]['replies']
-                        for j in range(len(replies['comments'])):
-                            m1 = replies['comments'][j]['message']
-                            comments_text.append(m1)
-                return comments_text
+            comments = data['payload']
+            
+            #this is a list of comment
+            comments_list = comments['page']
+                    
+            comments_text = []
+            
+            #append each comment and reply to a list
+            for i in range(len(comments_list)):
+                if len(comments_list[i]['replies']['comments'])>0:
+                    m = comments_list[i]['message']
+                    comments_text.append(m)
+                    
+                    replies = comments_list[i]['replies']
+                    for j in range(len(replies['comments'])):
+                        m1 = replies['comments'][j]['message']
+                        comments_text.append(m1)
+            return comments_text
         except TypeError:
             pass
     except ValueError:
