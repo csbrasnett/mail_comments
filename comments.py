@@ -9,7 +9,7 @@ author: Chris Brasnett, University of Bristol, christopher.brasnett@bristol.ac.u
 import requests
 import re
 import time
-import pickle
+import os
 
 def articles(url):
     r = requests.get(url)
@@ -42,26 +42,30 @@ def comments_list(number):
     resp = requests.get(page,headers={'User-Agent':'Mozilla/5.0'})
     data = resp.json()
     try:
-        comments = data['payload']
-        
-        #this is a list of comment
-        comments_list = comments['page']
-                
-        comments_text = []
-        
-        #append each comment and reply to a list
-        for i in range(len(comments_list)):
-            if len(comments_list[i]['replies']['comments'])>0:
-                m = comments_list[i]['message']
-                comments_text.append(m)
-                
-                replies = comments_list[i]['replies']
-                for j in range(len(replies['comments'])):
-                    m1 = replies['comments'][j]['message']
-                    comments_text.append(m1)
-        return comments_text
+        try:
+            comments = data['payload']
+            
+            #this is a list of comment
+            comments_list = comments['page']
+                    
+            comments_text = []
+            
+            #append each comment and reply to a list
+            for i in range(len(comments_list)):
+                if len(comments_list[i]['replies']['comments'])>0:
+                    m = comments_list[i]['message']
+                    comments_text.append(m)
+                    
+                    replies = comments_list[i]['replies']
+                    for j in range(len(replies['comments'])):
+                        m1 = replies['comments'][j]['message']
+                        comments_text.append(m1)
+            return comments_text
+        except ValueError:
+            pass
     except TypeError:
         pass
+    
     return 0
 
 '''
@@ -97,8 +101,15 @@ use this to iteratively scrape from the homepage
 '''
 find comments from brute force searching
 '''
+
+if os.path.exists('comments.txt'):
+    os.remove('comments.txt')
+
+start = 6952000
+end = 6959317
+
 all_comments = []
-for k in range(6762911,6959317):
+for k in range(start,end):
     time.sleep(0.1)
     #get the list of comments
     comms = comments_list(k)
@@ -108,12 +119,15 @@ for k in range(6762911,6959317):
     if type(comms)!=int:
         for l in comms:
             all_comments.append(l)
-    print((len(range(6762911,6959317))-(range(6762911,6959317)[-1]-k))/len(range(6762911,6959317)),len(all_comments))
-    
-#write as a pickle file
-pickle.dump(all_comments, open('comments.p', 'wb'))
 
-#write to file
-with open('comments.txt', 'w') as f:
-    for i in all_comments:
-        f.write('%s\n' %i)        
+        #write to file
+        with open('comments.txt', 'a') as f:
+            for i in range(len(comms)):
+                f.write('%d\t%s\n' %(i, comms[i]))
+    
+    prog = ((len(range(start, end))-(range(start, end)[-1]-k))/len(range(start, end))) * 100
+
+#    if prog*100 %100 <0.001:
+#        print('%.4f%% progress, %d comments' %(prog, len(all_comments)))        
+    print('%.4f%% progress, %d comments' %(prog, len(all_comments)))        
+        
