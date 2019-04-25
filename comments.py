@@ -40,30 +40,30 @@ def comments_list(number):
 
     #make the request
     resp = requests.get(page,headers={'User-Agent':'Mozilla/5.0'})
-    data = resp.json()
     try:
+        data = resp.json()
         try:
-            comments = data['payload']
-            
-            #this is a list of comment
-            comments_list = comments['page']
-                    
-            comments_text = []
-            
-            #append each comment and reply to a list
-            for i in range(len(comments_list)):
-                if len(comments_list[i]['replies']['comments'])>0:
-                    m = comments_list[i]['message']
-                    comments_text.append(m)
-                    
-                    replies = comments_list[i]['replies']
-                    for j in range(len(replies['comments'])):
-                        m1 = replies['comments'][j]['message']
-                        comments_text.append(m1)
-            return comments_text
-        except ValueError:
+                comments = data['payload']
+                
+                #this is a list of comment
+                comments_list = comments['page']
+                        
+                comments_text = []
+                
+                #append each comment and reply to a list
+                for i in range(len(comments_list)):
+                    if len(comments_list[i]['replies']['comments'])>0:
+                        m = comments_list[i]['message']
+                        comments_text.append(m)
+                        
+                        replies = comments_list[i]['replies']
+                        for j in range(len(replies['comments'])):
+                            m1 = replies['comments'][j]['message']
+                            comments_text.append(m1)
+                return comments_text
+        except TypeError:
             pass
-    except TypeError:
+    except ValueError:
         pass
     
     return 0
@@ -105,8 +105,8 @@ find comments from brute force searching
 if os.path.exists('comments.txt'):
     os.remove('comments.txt')
 
-start = 6952000
 end = 6959317
+start = end - 20000
 
 all_comments = []
 for k in range(start,end):
@@ -123,7 +123,7 @@ for k in range(start,end):
         #write to file
         with open('comments.txt', 'a') as f:
             for i in range(len(comms)):
-                f.write('%d\t%s\n' %(i, comms[i]))
+                f.write('%s\n' %comms[i])
     
     prog = ((len(range(start, end))-(range(start, end)[-1]-k))/len(range(start, end))) * 100
 
