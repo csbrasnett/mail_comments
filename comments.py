@@ -10,6 +10,15 @@ import requests
 import re
 import time
 import os
+import pickle
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.rc('text',usetex=True)
+plt.rcParams['savefig.dpi'] = 300
+plt.rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
+plt.rcParams.update({'font.size':15})
+
 
 def articles(url):
     r = requests.get(url)
@@ -52,10 +61,10 @@ def comments_list(number):
             
             #append each comment and reply to a list
             for i in range(len(comments_list)):
-                if len(comments_list[i]['replies']['comments'])>0:
-                    m = comments_list[i]['message']
-                    comments_text.append(m)
-                    
+                m = comments_list[i]['message']
+                comments_text.append(m)
+
+                if len(comments_list[i]['replies']['comments'])>0:                    
                     replies = comments_list[i]['replies']
                     for j in range(len(replies['comments'])):
                         m1 = replies['comments'][j]['message']
@@ -102,13 +111,19 @@ use this to iteratively scrape from the homepage
 find comments from brute force searching
 '''
 
-if os.path.exists('comments.txt'):
-    os.remove('comments.txt')
+opfilename = 'comments1.txt'
+
+if os.path.exists(opfilename):
+    os.remove(opfilename)
 
 end = 6959317
-start = end - 20000
+start = end - 50000
 
 all_comments = []
+
+p = np.zeros(0)
+c = np.zeros(0)
+
 for k in range(start,end):
     time.sleep(0.1)
     #get the list of comments
@@ -121,13 +136,26 @@ for k in range(start,end):
             all_comments.append(l)
 
         #write to file
-        with open('comments.txt', 'a') as f:
+        with open(opfilename, 'a') as f:
             for i in range(len(comms)):
                 f.write('%s\n' %comms[i])
     
     prog = ((len(range(start, end))-(range(start, end)[-1]-k))/len(range(start, end))) * 100
+    
+    
+    p = np.append(p, prog)
+    c = np.append(c, len(all_comments))
 
-#    if prog*100 %100 <0.001:
-#        print('%.4f%% progress, %d comments' %(prog, len(all_comments)))        
-    print('%.4f%% progress, %d comments' %(prog, len(all_comments)))        
-        
+    print('%.3f%% progress, %d comments' %(prog, len(all_comments)))
+
+#write list to pickle file
+pickle.dump(all_comments,open('all_comments.p','wb'))
+
+fig, ax = plt.subplots(1,1)
+
+ax.plot(p,c)
+ax.set_xlabel('Scraping progress (\%)')
+ax.set_ylabel('Total number of comments')
+ax.set_xlim(0,p.max())
+ax.set_ylim(0,c.max())
+fig.savefig('fig.png', bbox_inches = 'tight')
