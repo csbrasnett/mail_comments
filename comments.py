@@ -47,32 +47,41 @@ def comments_list(number):
     #create the page for getting the comment data
     page = 'http://www.dailymail.co.uk/reader-comments/p/asset/readcomments/' + str(number) + '?max=2000&order=desc&rcCache=shout'
 
-    #make the request
-    resp = requests.get(page,headers={'User-Agent':'Mozilla/5.0'})
+    
     try:
-        data = resp.json()
+        #make the request
+        resp = requests.get(page,headers={'User-Agent':'Mozilla/5.0'})
+        
         try:
-            comments = data['payload']
-            
-            #this is a list of comment
-            comments_list = comments['page']
-                    
-            comments_text = []
-            
-            #append each comment and reply to a list
-            for i in range(len(comments_list)):
-                m = comments_list[i]['message']
-                comments_text.append(m)
+            data = resp.json()
 
-                if len(comments_list[i]['replies']['comments'])>0:                    
-                    replies = comments_list[i]['replies']
-                    for j in range(len(replies['comments'])):
-                        m1 = replies['comments'][j]['message']
-                        comments_text.append(m1)
-            return comments_text
-        except TypeError:
+            try:
+                comments = data['payload']
+                
+                #this is a list of comment
+                comments_list = comments['page']
+                        
+                comments_text = []
+                
+                #append each comment and reply to a list
+                for i in range(len(comments_list)):
+                    m = comments_list[i]['message']
+                    comments_text.append(m)
+    
+                    if len(comments_list[i]['replies']['comments'])>0:                    
+                        replies = comments_list[i]['replies']
+                        for j in range(len(replies['comments'])):
+                            m1 = replies['comments'][j]['message']
+                            comments_text.append(m1)
+                return comments_text
+
+            except TypeError:
+                pass
+
+        except ValueError:
             pass
-    except ValueError:
+    
+    except requests.exceptions.ConnectionError:
         pass
     
     return 0
@@ -111,21 +120,23 @@ use this to iteratively scrape from the homepage
 find comments from brute force searching
 '''
 
-opfilename = 'comments1.txt'
+opfilename = 'comments3.txt'
 
 if os.path.exists(opfilename):
     os.remove(opfilename)
 
 end = 6959317
-start = end - 50000
+start = end - 100000
 
 all_comments = []
 
 p = np.zeros(0)
 c = np.zeros(0)
 
+start_time = time.time()
+
 for k in range(start,end):
-    time.sleep(0.1)
+    time.sleep(0.2)
     #get the list of comments
     comms = comments_list(k)
 
@@ -139,14 +150,15 @@ for k in range(start,end):
         with open(opfilename, 'a') as f:
             for i in range(len(comms)):
                 f.write('%s\n' %comms[i])
-    
+
+    #some ways of keeping track    
     prog = ((len(range(start, end))-(range(start, end)[-1]-k))/len(range(start, end))) * 100
-    
-    
     p = np.append(p, prog)
     c = np.append(c, len(all_comments))
-
-    print('%.3f%% progress, %d comments' %(prog, len(all_comments)))
+    t = time.time() - start_time
+    
+    if prog%1  <0.001:
+        print('%.3f%% progress, %d comments, %.3f s' %(prog, len(all_comments), t))
 
 #write list to pickle file
 pickle.dump(all_comments,open('all_comments.p','wb'))
